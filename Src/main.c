@@ -22,6 +22,7 @@ static void peripherals_init(void)
     // Configuración de GPIOs
     gpio_init(GPIOA, 5, 0x01, 0x00, 0x01, 0x00, 0x00);  // LD2 (heartbeat)
     gpio_init(GPIOC, 13, 0x00, 0x00, 0x01, 0x00, 0x00);  // Botón
+    gpio_init(GPIOB, 4, 0x01, 0x00, 0x01, 0x00, 0x00);  // PWM LED
 
     // Inicialización de periféricos
     init_systick();
@@ -51,14 +52,14 @@ int main(void)
     while (1) {
         heartbeat_toggle();
 
-        if (button_event) {
-            button_event = 0;
-            room_control_on_button_press();
+        if (button_event) { // Evento de botón
+            button_event = 0; // Limpiar flag
+            room_control_on_button_press(); // Llamar al manejador de botón
         }
-        if (uart_event_char) {
-            char c = uart_event_char;
-            uart_event_char = 0;
-            room_control_on_uart_receive(c);
+        if (uart_event_char) { // Evento de recepción UART
+            char c = uart_event_char; // Guardar carácter recibido
+            uart_event_char = 0; // Limpiar flag
+            room_control_on_uart_receive(c);// Llamar al manejador de recepción UART 
         }
         // Llamar a la función de actualización periódica
         room_control_update();

@@ -8,8 +8,8 @@ void init_systick(void)
     SYSTICK->CSR = (1 << 0) | (1 << 1) | (1 << 2);    // ENABLE|TICKINT|CLKSOURCE
 }
 
-uint32_t systick_get_ms(void)
+uint32_t systick_get_ms(void) // Retorna el contador de milisegundos
 {
-    extern volatile uint32_t system_ms_counter;
-    return system_ms_counter;
+    extern volatile uint32_t system_ms_counter;// Definido en systick_irq_handler
+    return system_ms_counter; // Retorna el contador de milisegundos
 }

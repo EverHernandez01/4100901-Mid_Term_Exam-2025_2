@@ -13,7 +13,8 @@ typedef enum {
 
 // Variable de estado global
 room_state_t current_state = ROOM_IDLE;
-static uint32_t led_on_time = 0;
+static uint32_t led_on_time = 10; // Tiempo en ms cuando el LED fue encendido
+volatile uint8_t Duty_Cycle_Actual = 20;
 
 void room_control_app_init(void)
 {
@@ -26,18 +27,23 @@ void room_control_on_button_press(void)
     if (current_state == ROOM_IDLE) {
         current_state = ROOM_OCCUPIED;
         tim3_ch1_pwm_set_duty_cycle(100);  // PWM al 100%
-        led_on_time = systick_get_ms();
-        uart_send_string("Sala ocupada\r\n");
+        led_on_time = systick_get_ms();// 
+        uart_send_string("Controlador de la sala v2.0\r\n");
     } else {
         current_state = ROOM_IDLE;
-        tim3_ch1_pwm_set_duty_cycle(0);  // PWM al 0%
-        uart_send_string("Sala vacía\r\n");
+        tim3_ch1_pwm_set_duty_cycle(20);  // PWM al 20%
+        uart_send_string("Estado inicial\r\n");
     }
 }
 
 void room_control_on_uart_receive(char received_char)
 {
     switch (received_char) {
+        case 's':
+        case 'S':
+            uart_send(Duty_Cycle_Actual);
+            uart_send_string("\r\n");
+            break;
         case 'h':
         case 'H':
             tim3_ch1_pwm_set_duty_cycle(100);
@@ -81,6 +87,23 @@ void room_control_on_uart_receive(char received_char)
             tim3_ch1_pwm_set_duty_cycle(50);
             uart_send_string("PWM: 50%\r\n");
             break;
+        case '?':
+            uart_send_string("Comandos disponibles:\r\n");
+            uart_send_string("'1'-'5': ajuste del brillo lámpara (10%, 20%, 30%, 40%, 50%) \r\n");
+            uart_send_string(" '0': Apagar lámpara\r\n");
+            uart_send_string(" 'o': abrir Puerta( Ocupar sala)\r\n");
+            uart_send_string(" 'c': Cerrar puerta (Sala vacía)\r\n");
+            uart_send_string(" 's': Estado del sistema \r\n");
+            uart_send_string("  '?': ayuda\r\n");
+            break;
+        case 'g':
+        case 'G':
+            current_state = ROOM_OCCUPIED;
+            tim3_ch1_pwm_set_duty_cycle(100);
+            led_on_time = systick_get_ms();
+            uart_send_string("Sala ocupada\r\n");
+            break;
+
         default:
             uart_send_string("Comando desconocido: ");
             uart_send(received_char);
@@ -89,13 +112,14 @@ void room_control_on_uart_receive(char received_char)
     }
 }
 
-void room_control_update(void)
+void room_control_update(void) // Llamar periódicamente en el bucle principal
 {
-    if (current_state == ROOM_OCCUPIED) {
-        if (systick_get_ms() - led_on_time >= LED_TIMEOUT_MS) {
-            current_state = ROOM_IDLE;
-            tim3_ch1_pwm_set_duty_cycle(0);
-            uart_send_string("Timeout: Sala vacía\r\n");
+    if (current_state == ROOM_OCCUPIED) { // Solo verificar timeout si la sala está ocupada
+        if (systick_get_ms() - led_on_time >= LED_TIMEOUT_MS) { // Timeout alcanzado
+            current_state = ROOM_IDLE; // Cambiar a estado IDLE
+            tim3_ch1_pwm_set_duty_cycle(0); // Apagar LED
+            uart_send_string("Timeout: Sala vacía\r\n"); // Notificar por UART
         }
     }
+
 }

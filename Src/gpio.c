@@ -25,7 +25,7 @@ void gpio_init(GPIO_Typedef_t * GPIO, uint8_t pin, uint8_t mode, uint8_t type, u
     GPIO->TYPER &= ~(1 << pin);           // Limpia bits
     GPIO->TYPER |=  (type << pin);
 
-    GPIO->SPEEDR &= ~(3 << (pin*2));
+    GPIO->SPEEDR &= ~(3 << (pin*2)); // Limpia bits
     GPIO->SPEEDR |= (speed << (pin*2));
 
     GPIO->PUPDR &= ~(3 << (pin*2));
